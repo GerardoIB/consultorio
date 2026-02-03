@@ -28,9 +28,7 @@ app.use(express.static(distPath));
 
 // 2. EVITAR ERROR 500: Si piden un asset y no estaba en el static anterior, es 404.
 // Esto evita que Express intente enviar index.html como si fuera un JS.
-app.get('/assets/*', (req, res) => {
-    res.status(404).send("Archivo no encontrado");
-});
+
 
 // 3. Ruta catch-all para React (SPA)
 app.get(/.*/, (req, res) => {
