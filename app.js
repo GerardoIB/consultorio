@@ -18,10 +18,10 @@ app.use('/api/medicamentos',medicamentoRouter({MedicamentoModel}))
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-app.use(express.static(path.join(__dirname,'dist')))
+app.use(express.static(path.join(__dirname,'/src/dist')))
 
 app.get(/.*/, ( req, res) =>{
-    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    const indexPath = path.join(__dirname, 'src', 'dist', 'index.html');
     res.sendFile(indexPath)
 })
 
