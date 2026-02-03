@@ -21,7 +21,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // RUTA ABSOLUTA a la carpeta dist (dentro de src)
-const distPath = path.join(__dirname, 'src', 'dist');
+const distPath = path.join(__dirname, 'dist');
 
 // 1. Servir archivos estáticos
 app.use(express.static(distPath));
