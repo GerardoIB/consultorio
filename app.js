@@ -33,7 +33,7 @@ app.get('/assets/*', (req, res) => {
 });
 
 // 3. Ruta catch-all para React (SPA)
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     const indexPath = path.join(distPath, 'index.html');
     res.sendFile(indexPath, (err) => {
         if (err && !res.headersSent) {
