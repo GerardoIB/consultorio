@@ -1,0 +1,12 @@
+[
+    {
+      "nombre": "TIRZEPATIDA",
+      "consulta_base": 1000,
+      "presentaciones": [
+        { "tamano_mg": 20, "costo_total_1pza": 2650, "costo_total_3pzas": 2400, "costo_total_mayoreo": 2000 },
+        { "tamano_mg": 40, "costo_total_1pza": 2650, "costo_total_3pzas": 2400, "costo_total_mayoreo": 2000 },
+        { "tamano_mg": 60, "costo_total_1pza": 2650, "costo_total_3pzas": 2400, "costo_total_mayoreo": 2000 },
+        { "tamano_mg": 80, "costo_total_1pza": 3000, "costo_total_3pzas": 2800, "costo_total_mayoreo": 2500 }
+      ]
+    }
+  ]
