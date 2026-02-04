@@ -46,67 +46,84 @@ export class MedicamentoModel {
     }
 
 
-    static async calcularPresupuesto(nombreMed, tamanoPluma, dosisSolicitada, mesActual = 1) {
-        try {
-            const med = await this.getByName(nombreMed);
-            if (!med) throw new Error("Medicamento no encontrado");
+    // Actualizamos la firma del método para aceptar el precioConsultaManual
+static async calcularPresupuesto(nombreMed, tamanoPluma, dosisSolicitada, mesActual = 1, precioVialManual = null, precioConsultaManual = null) {
+    try {
+        const med = await this.getByName(nombreMed);
+        if (!med) throw new Error("Medicamento no encontrado");
 
-            const pres = med.presentaciones.find(p => p.tamano_mg === tamanoPluma);
-            if (!pres) throw new Error("Tamaño de presentación no encontrado");
-
-            // 1. CÁLCULO DE LA CONSULTA
-            const incrementoPorMes = 125;
-            const gastoOperativo = 250; // <--- LO QUE SE RESTA (Luz, agua, etc)
-
-            // Consulta cobrada al paciente
-            const consultaIngreso = med.consulta_base + ((mesActual - 1) * incrementoPorMes);
-
-            // Ganancia real de la consulta (Ingreso - 250)
-            const gananciaConsulta = consultaIngreso - gastoOperativo;
-
-            // 2. CÁLCULO DEL MEDICAMENTO
-            const costoCompra = pres.costo_compra || 0; // Cuánto te cuesta a ti la pluma completa
-
-            // Costo real por cada mg aplicado
-            const costoRealPorMg = costoCompra / pres.tamano_mg;
-            const costoRealDosis = costoRealPorMg * dosisSolicitada;
-
-            // 3. FUNCIÓN DE CÁLCULO FINAL (Simplificada)
-            // Usamos el precio de lista "Unitario" como referencia estándar de cobro
-            const calcularNeto = () => {
-                // Precio de venta sugerido (base) por mg
-                const precioVentaPorMg = pres.costo_total_1pza / pres.tamano_mg;
-                const precioVentaDosis = precioVentaPorMg * dosisSolicitada;
-
-                // Ganancia pura del medicamento (Venta - Compra)
-                const gananciaMedicamento = precioVentaDosis - costoRealDosis;
-
-                // GANANCIA TOTAL NETA
-                const gananciaTotal = gananciaMedicamento + gananciaConsulta;
-
-                return {
-                    ingresoTotal: Number((precioVentaDosis + consultaIngreso).toFixed(2)), // Lo que paga el paciente
-                    costoTotal: Number((costoRealDosis + gastoOperativo).toFixed(2)),      // Lo que gastas tú
-                    gananciaNeta: Number(gananciaTotal.toFixed(2)),                        // Lo que te queda libre
-                    desglose: {
-                        porConsulta: Number(gananciaConsulta.toFixed(2)),
-                        porFarmaco: Number(gananciaMedicamento.toFixed(2))
-                    }
-                };
+        let pres;
+        
+        // --- LOGICA DEL MEDICAMENTO (VIAL) ---
+        if (precioVialManual) {
+            // Modo Manual: Usamos el precio del vial que mandó el usuario
+            pres = {
+                tamano_mg: tamanoPluma,
+                costo_compra: precioVialManual,
+                costo_total_1pza: precioVialManual * 1.5 // (Opcional: margen simulado)
             };
+        } else {
+            // Modo Automático: Base de datos
+            pres = med.presentaciones.find(p => p.tamano_mg === tamanoPluma);
+            if (!pres) throw new Error("Tamaño no encontrado");
+        }
+
+        // --- LOGICA DE LA CONSULTA (NUEVO) ---
+        let consultaIngreso;
+
+        if (precioConsultaManual) {
+            // Opción A: El doctor puso el precio manualmente
+            consultaIngreso = precioConsultaManual;
+        } else {
+            // Opción B: Cálculo automático (Base + incrementos por mes)
+            const incrementoPorMes = 125;
+            consultaIngreso = med.consulta_base ;
+        }
+
+        // --- CÁLCULOS RESTANTES (Igual que antes) ---
+        
+        // Costo real por dosis (Gasto)
+        const costoCompra = pres.costo_compra || 0; 
+        const costoRealPorMg = costoCompra / pres.tamano_mg;
+        const costoRealDosis = costoRealPorMg * dosisSolicitada;
+        
+        const gananciaConsulta = consultaIngreso - costoRealDosis;
+
+        const calcularNeto = () => {
+            // Usamos el precio del vial (manual o auto) como base para "lo que dejas de ganar" si vendes
+            const precioBaseCalculo = precioVialManual ? precioVialManual : pres.costo_total_1pza;
+
+            const precioVentaPorMg = precioBaseCalculo / pres.tamano_mg;
+            const precioVentaDosis = precioVentaPorMg * dosisSolicitada;
+
+            const gananciaMedicamento = precioVentaDosis ;
+            
+            // Fórmula final
+            const gananciaTotal = gananciaConsulta - precioVentaDosis;
 
             return {
-                medicamento: med.nombre,
-                configuracion: {
-                    mes: mesActual,
-                    dosis: dosisSolicitada,
-                    consultaCobrada: consultaIngreso
-                },
-                resultado: calcularNeto() // Ya no devolvemos opciones, solo el resultado neto
+                ingresoTotal: Number((consultaIngreso).toFixed(2)),
+                costoTotal: Number((precioVentaDosis).toFixed(2)),
+                gananciaNeta: Number(gananciaTotal.toFixed(2)),
+                desglose: {
+                    porConsulta: Number(gananciaConsulta.toFixed(2)),
+                    porFarmaco: Number(gananciaMedicamento.toFixed(2))
+                }
             };
+        };
 
-        } catch (error) {
-            throw new Error(error.message);
-        }
+        return {
+            medicamento: med.nombre,
+            configuracion: {
+                mes: mesActual,
+                dosis: dosisSolicitada,
+                modo: (precioVialManual || precioConsultaManual) ? 'Manual' : 'Automático'
+            },
+            resultado: calcularNeto()
+        };
+
+    } catch (error) {
+        throw new Error(error.message);
     }
+}
 }

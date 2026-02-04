@@ -31,28 +31,30 @@ export class MedicamentoController {
     }
 
     // GET: Calcular presupuesto (La lógica "estrella")
-   // En src/controllers/medicamentoController.js
+    // En src/controllers/medicamentoController.js
 
-getCotizacion = async (req, res) => {
-    try {
-        // Leemos 'mes' del query params. Si no viene, asumimos 1.
-        const { nombre, tamano_mg, dosis_mg, mes } = req.query;
+    getCotizacion = async (req, res) => {
+        try {
+            // Leemos 'precio_custom' (vial) y 'precio_consulta' (cobro doctor)
+            const { nombre, tamano_mg, dosis_mg, mes, precio_custom, precio_consulta } = req.query;
 
-        if (!nombre || !tamano_mg || !dosis_mg) {
-            return res.status(400).json({ message: "Faltan parámetros" });
+            if (!nombre || !tamano_mg || !dosis_mg) {
+                return res.status(400).json({ message: "Faltan parámetros básicos" });
+            }
+
+            const resultado = await this.MedicamentoModel.calcularPresupuesto(
+                nombre,
+                parseFloat(tamano_mg),
+                parseFloat(dosis_mg),
+                parseInt(mes) || 1,
+                precio_custom ? parseFloat(precio_custom) : null,
+                precio_consulta ? parseFloat(precio_consulta) : null // <--- NUEVO PARÁMETRO
+            );
+
+            res.json(resultado);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: error.message });
         }
-
-        const resultado = await this.MedicamentoModel.calcularPresupuesto(
-            nombre, 
-            parseFloat(tamano_mg), 
-            parseFloat(dosis_mg),
-            parseInt(mes) || 1 // <-- Pasamos el mes aquí
-        );
-
-        res.json(resultado);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
     }
-}
 }
