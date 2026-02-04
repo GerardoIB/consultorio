@@ -104,7 +104,7 @@ static async calcularPresupuesto(nombreMed, tamanoPluma, dosisSolicitada, mesAct
             return {
                 ingresoTotal: Number((consultaIngreso).toFixed(2)),
                 costoTotal: Number((precioVentaDosis).toFixed(2)),
-                gananciaNeta: Number(gananciaTotal.toFixed(2)),
+                gananciaNeta: Number(gananciaConsulta.toFixed(2)),
                 desglose: {
                     porConsulta: Number(gananciaConsulta.toFixed(2)),
                     porFarmaco: Number(gananciaMedicamento.toFixed(2))
